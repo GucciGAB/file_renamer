@@ -15,34 +15,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $startNumber = isset($_POST['start_number']) ? intval($_POST['start_number']) : 1;
 
     $uploadedFiles = [];
+    $counter = $startNumber; // Start from the given number
 
     foreach ($files['tmp_name'] as $index => $tmpName) {
         if ($files['error'][$index] == 0) {
             $originalName = $files['name'][$index];
             $ext = pathinfo($originalName, PATHINFO_EXTENSION);
 
-            // Extract number from filename if present
-            preg_match('/\d+/', $originalName, $matches);
-            $pageNum = isset($matches[0]) ? intval($matches[0]) : $startNumber++;
-
-            $newFileName = sprintf("%s%03d.%s", $prefix, $pageNum, $ext);
-            $filePath = $uploadDir . $newFileName;
+            // Assign a sequential number instead of extracting from filename
+            do {
+                $newFileName = sprintf("%s%03d.%s", $prefix, $counter, $ext);
+                $filePath = $uploadDir . $newFileName;
+                $counter++; // Increment for the next file
+            } while (file_exists($filePath)); // Ensure unique filename
 
             if (move_uploaded_file($tmpName, $filePath)) {
-                $uploadedFiles[$pageNum] = $filePath;
+                $uploadedFiles[] = $filePath;
             } else {
                 echo "Error uploading file: $originalName <br>";
             }
         }
     }
 
-    // Sort files by page number
-    ksort($uploadedFiles);
-
     echo "<h3>Files Uploaded Successfully</h3>";
     foreach ($uploadedFiles as $file) {
         echo "<a href='$file' download>" . basename($file) . "</a><br>";
-        
     }
 }
 ?>
